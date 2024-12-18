@@ -1,34 +1,34 @@
-import tensorflow as tf
-from tensorflow.keras import layers, models
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 
-def create_mnist_model(input_shape=(28, 28, 1), num_classes=10):
-    """
-    Create a 3-layer Deep Neural Network for MNIST classification
-    
-    Args:
-        input_shape (tuple): Input image dimensions
-        num_classes (int): Number of output classes
-    
-    Returns:
-        tf.keras.Model: Compiled neural network model
-    """
-    model = models.Sequential([
+class MNISTClassifier(nn.Module):
+    def __init__(self):
+        super(MNISTClassifier, self).__init__()
         # Convolutional layers
-        layers.Conv2D(32, (3, 3), activation='relu', input_shape=input_shape),
-        layers.MaxPooling2D((2, 2)),
-        layers.Conv2D(64, (3, 3), activation='relu'),
-        layers.MaxPooling2D((2, 2)),
+        self.conv1 = nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1)
         
-        # Flatten and fully connected layers
-        layers.Flatten(),
-        layers.Dense(64, activation='relu'),
-        layers.Dense(num_classes, activation='softmax')
-    ])
+        # Fully connected layers
+        self.fc1 = nn.Linear(32 * 7 * 7, 128)
+        self.fc2 = nn.Linear(128, 10)
+        
+        # Dropout for regularization
+        self.dropout = nn.Dropout(0.25)
     
-    model.compile(
-        optimizer='adam',
-        loss='categorical_crossentropy',
-        metrics=['accuracy']
-    )
-    
-    return model
+    def forward(self, x):
+        # Convolutional layers with max pooling
+        x = F.relu(self.conv1(x))
+        x = F.max_pool2d(x, 2)
+        x = F.relu(self.conv2(x))
+        x = F.max_pool2d(x, 2)
+        
+        # Flatten
+        x = x.view(x.size(0), -1)
+        
+        # Fully connected layers
+        x = F.relu(self.fc1(x))
+        x = self.dropout(x)
+        x = self.fc2(x)
+        
+        return x

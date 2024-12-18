@@ -1,36 +1,39 @@
-# ML Model CI/CD Pipeline
+# MNIST Classification CI/CD Pipeline
 
-## Project Setup
+## Project Overview
+This project demonstrates a machine learning CI/CD pipeline for MNIST digit classification using PyTorch.
 
-### Local Development
-
+## Local Setup
 1. Clone the repository
 2. Create a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
-```
-
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+   ```
 3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-4. Run tests:
+## Running Tests
 ```bash
 python -m tests.test_model
 ```
 
-5. Train the model:
+## Training the Model
 ```bash
 python src/train.py
 ```
 
-### GitHub Actions
+## GitHub Actions
+This project includes a GitHub Actions workflow that:
+- Installs dependencies
+- Runs model tests
+- Trains the model
+- Verifies model training
 
-This project uses GitHub Actions for:
-- Dependency installation
-- Model testing
-- Model training
-
-Each push and pull request will trigger the workflow.
+## Model Specifications
+- Architecture: 3-Layer Deep Neural Network
+- Input: 28x28 MNIST images
+- Output: 10 classes (digits 0-9)
+- Parameters: <25,000

@@ -3,10 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# ML Models
-models/*.h5
+# ML Specific
+data/
+models/
+*.pth
 
-# Environment
+# Virtual Environment
 venv/
 .env
 .venv
@@ -15,5 +17,6 @@ venv/
 .vscode/
 .idea/
 
-# Logs
-*.log
+# OS
+.DS_Store
+Thumbs.db

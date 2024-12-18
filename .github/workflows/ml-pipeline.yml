@@ -1,6 +1,9 @@
 name: ML Model CI/CD Pipeline
-
 on: [push, pull_request]
+
+permissions:
+  contents: write
+  actions: write
 
 jobs:
   build-and-test:
@@ -23,6 +26,14 @@ jobs:
       run: |
         python -m tests.test_model
     
-    - name: Train Model
+    - name: Train Model with Augmentations
       run: |
         python src/train.py
+    
+    - name: Verify Outputs
+      run: |
+        # Check if models directory exists and contains a model file
+        ls models/
+        
+        # Check if augmentation images were generated
+        ls outputs/augmentations/
