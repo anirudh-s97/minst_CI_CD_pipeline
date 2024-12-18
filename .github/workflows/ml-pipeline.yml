@@ -17,6 +17,11 @@ jobs:
       with:
         python-version: '3.9'
     
+    - name: Create required directories
+      run: |
+        mkdir -p models
+        mkdir -p outputs/augmentations
+    
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
