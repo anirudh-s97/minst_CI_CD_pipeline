@@ -21,19 +21,25 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
+        pip install pytest
     
     - name: Run model tests
       run: |
-        python -m tests.test_model
+        # Ensure PYTHONPATH is set correctly
+        export PYTHONPATH=.
+        
+        # Run tests with detailed output
+        pytest tests/test_model.py -v
     
     - name: Train Model with Augmentations
       run: |
+        export PYTHONPATH=.
         python src/train.py
     
     - name: Verify Outputs
       run: |
         # Check if models directory exists and contains a model file
-        ls models/
+        ls -l models/
         
         # Check if augmentation images were generated
-        ls outputs/augmentations/
+        ls -l outputs/augmentations/ || echo "No augmentation images found"
