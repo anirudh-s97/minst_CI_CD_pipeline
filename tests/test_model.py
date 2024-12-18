@@ -3,9 +3,10 @@ import sys
 import os
 
 # Add the project root to the Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, project_root)
 
-from src.model import MNISTClassifier
+from src.model import MNISTClassifier, count_parameters
 
 def test_model_architecture():
     """
@@ -21,15 +22,15 @@ def test_model_architecture():
     assert output.shape[1] == 10, "Model should have 10 output classes"
     
     # Count parameters
-    total_params = sum(p.numel() for p in model.parameters())
+    total_params = count_parameters(model)
     print(f"Total parameters: {total_params}")
     assert total_params < 25000, "Model should have less than 25000 parameters"
+    assert total_params > 0, "Model should have some parameters"
 
 def test_model_training():
     """
     Perform a quick training test to check basic functionality
     """
-    import torch
     import torch.nn as nn
     import torch.optim as optim
     

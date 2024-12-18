@@ -5,13 +5,13 @@ import torch.nn.functional as F
 class MNISTClassifier(nn.Module):
     def __init__(self):
         super(MNISTClassifier, self).__init__()
-        # Convolutional layers
-        self.conv1 = nn.Conv2d(1, 16, kernel_size=3, stride=1, padding=1)
-        self.conv2 = nn.Conv2d(16, 32, kernel_size=3, stride=1, padding=1)
+        # Reduced convolutional layers
+        self.conv1 = nn.Conv2d(1, 8, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(8, 16, kernel_size=3, stride=1, padding=1)
         
-        # Fully connected layers
-        self.fc1 = nn.Linear(32 * 7 * 7, 128)
-        self.fc2 = nn.Linear(128, 10)
+        # Reduced fully connected layers
+        self.fc1 = nn.Linear(16 * 7 * 7, 64)  # Reduced from 128
+        self.fc2 = nn.Linear(64, 10)  # Direct output layer
         
         # Dropout for regularization
         self.dropout = nn.Dropout(0.25)
@@ -32,3 +32,15 @@ class MNISTClassifier(nn.Module):
         x = self.fc2(x)
         
         return x
+
+def count_parameters(model):
+    """
+    Utility function to count total trainable parameters in a model
+    """
+    return sum(p.numel() for p in model.parameters() if p.requires_grad)
+
+# Optional: For quick parameter verification
+if __name__ == "__main__":
+    model = MNISTClassifier()
+    total_params = count_parameters(model)
+    print(f"Total trainable parameters: {total_params}")
