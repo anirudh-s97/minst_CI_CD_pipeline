@@ -4,8 +4,8 @@ __pycache__/
 *$py.class
 
 # ML Specific
-data/
-models/
+../data/
+../models/
 *.pth
 
 # Virtual Environment

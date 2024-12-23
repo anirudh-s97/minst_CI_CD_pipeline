@@ -45,73 +45,75 @@ def train_model():
         save_augmented_images(dataset_to_save)
     except Exception as e:
         print(f"Augmented images saved to outputs/augmentations")
+
+    finally:
     
-    # Create DataLoader
-    train_loader = DataLoader(
-        train_dataset, 
-        batch_size=32, 
-        shuffle=True,
-        # Add pin_memory for potential performance improvement
-        pin_memory=True
-    )
-    
-    # Initialize model, loss, and optimizer
-    device = torch.device("cpu")
-    model = MNISTClassifier().to(device)
-    
-    # Print parameter count
-    total_params = count_parameters(model)
-    print(f"Total trainable parameters: {total_params}")
-    
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
-    
-    # Training loop (1 epoch)
-    model.train()
-    best_accuracy = 0
-    for epoch in range(1):
-        total_loss = 0
-        correct = 0
-        total = 0
+        # Create DataLoader
+        train_loader = DataLoader(
+            train_dataset, 
+            batch_size=32, 
+            shuffle=True,
+            # Add pin_memory for potential performance improvement
+            pin_memory=True
+        )
         
-        for batch_idx, (data, target) in tqdm(enumerate(train_loader)):
-            # Ensure data is on the right device
-            data, target = data.float(), target.long()
-            
-            optimizer.zero_grad()
-            output = model(data)
-            loss = criterion(output, target)
-            loss.backward()
-            optimizer.step()
-            
-            total_loss += loss.item()
-            
-            # Calculate accuracy
-            _, predicted = torch.max(output.data, 1)
-            total += target.size(0)
-            correct += (predicted == target).sum().item()
+        # Initialize model, loss, and optimizer
+        device = torch.device("cpu")
+        model = MNISTClassifier().to(device)
         
-        accuracy = 100 * correct / total
-        print(f'Epoch {epoch+1}, Loss: {total_loss/len(train_loader)}, Accuracy: {accuracy}%')
+        # Print parameter count
+        total_params = count_parameters(model)
+        print(f"Total trainable parameters: {total_params}")
         
-        # Update best accuracy
-        best_accuracy = max(best_accuracy, accuracy)
-    
-    # Verify accuracy meets requirements
-    assert best_accuracy > 90, f"Model accuracy {best_accuracy}% should be > 90%"
-    
-    # Create models directory if it doesn't exist
-    os.makedirs('models', exist_ok=True)
-    
-    # Add timestamp to model filename
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    model_path = f'models/mnist_model_{timestamp}.pth'
-    
-    # Save the model
-    torch.save(model.state_dict(), model_path)
-    print(f'Model saved to {model_path}')
-    
-    return model, best_accuracy
+        criterion = nn.CrossEntropyLoss()
+        optimizer = optim.Adam(model.parameters(), lr=0.001)
+        
+        # Training loop (1 epoch)
+        model.train()
+        best_accuracy = 0
+        for epoch in range(1):
+            total_loss = 0
+            correct = 0
+            total = 0
+            
+            for batch_idx, (data, target) in tqdm(enumerate(train_loader)):
+                # Ensure data is on the right device
+                data, target = data.float(), target.long()
+                
+                optimizer.zero_grad()
+                output = model(data)
+                loss = criterion(output, target)
+                loss.backward()
+                optimizer.step()
+                
+                total_loss += loss.item()
+                
+                # Calculate accuracy
+                _, predicted = torch.max(output.data, 1)
+                total += target.size(0)
+                correct += (predicted == target).sum().item()
+            
+            accuracy = 100 * correct / total
+            print(f'Epoch {epoch+1}, Loss: {total_loss/len(train_loader)}, Accuracy: {accuracy}%')
+            
+            # Update best accuracy
+            best_accuracy = max(best_accuracy, accuracy)
+        
+        # Verify accuracy meets requirements
+        assert best_accuracy > 90, f"Model accuracy {best_accuracy}% should be > 90%"
+        
+        # Create models directory if it doesn't exist
+        os.makedirs('models', exist_ok=True)
+        
+        # Add timestamp to model filename
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        model_path = f'models/mnist_model_{timestamp}.pth'
+        
+        # Save the model
+        torch.save(model.state_dict(), model_path)
+        print(f'Model saved to {model_path}')
+        
+        return model, best_accuracy
 
 if __name__ == "__main__":
     train_model()
