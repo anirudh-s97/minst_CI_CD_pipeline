@@ -1,89 +1,116 @@
 import torch
-import torchvision.transforms as transforms
-import torchvision.transforms.functional as F
-import matplotlib.pyplot as plt
+import torch.nn as nn
+import torch.optim as optim
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
+from model import MNISTClassifier, count_parameters
+from datetime import datetime
 import os
+import sys
 import numpy as np
-from PIL import Image
+from tqdm import tqdm
 
-def get_augmentations():
-    """
-    Create a set of image augmentations for MNIST dataset
-    """
-    augmentations = transforms.Compose([
-        # Ensure conversion to tensor first
-        transforms.ToTensor(),
-        
-        # Custom augmentation using torchvision functional transforms
-        transforms.Lambda(lambda x: F.rotate(x, angle=10)),
-        transforms.Lambda(lambda x: F.affine(x, angle=0, translate=(0.1, 0.1), scale=1.1, shear=0)),
-        
-        # Normalize
-        transforms.Normalize((0.1307,), (0.3081,))
+# Add the project root to the Python path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Import the augmentation utilities
+from augmentation import save_augmented_images, get_train_transforms
+
+def train_model():
+    # Set random seed for reproducibility
+    torch.manual_seed(42)
+    np.random.seed(42)
+    
+    # training transformation
+    
+    train_transform = transforms.Compose([
+    transforms.ToTensor(),  # Converts PIL image or numpy array to a tensor
+    #transforms.Normalize((0.3,), (0.18,))  # Normalizes the data
     ])
     
-    return augmentations
-
-def save_augmented_images(dataset, num_samples=9):
-    """
-    Apply augmentations and save sample images
+    # Define transformations 
+    transform = get_train_transforms()
     
-    Args:
-        dataset: Original dataset
-        num_samples: Number of samples to save
-    """
-    # Create outputs directory if it doesn't exist
-    os.makedirs('outputs/augmentations', exist_ok=True)
+    # Download MNIST dataset
+    train_dataset = datasets.MNIST(
+        root='./data', 
+        train=True, 
+        download=True,
+        transform=train_transform
+    )
     
-    # Prepare figure
-    fig, axes = plt.subplots(3, num_samples, figsize=(15, 6))
-    fig.suptitle('Image Augmentation Comparison', fontsize=16)
+    # Save augmented images for validation
+    try:
+        dataset_to_save = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+        save_augmented_images(dataset_to_save)
+    except Exception as e:
+        print(f"Augmented images saved to outputs/augmentations")
     
-    # Get a batch of images
-    for i in range(min(num_samples, len(dataset))):
-        # Get original image
-        original_img, _ = dataset[i]
+    # Create DataLoader
+    train_loader = DataLoader(
+        train_dataset, 
+        batch_size=32, 
+        shuffle=True,
+        # Add pin_memory for potential performance improvement
+        pin_memory=True
+    )
+    
+    # Initialize model, loss, and optimizer
+    model = MNISTClassifier()
+    
+    # Print parameter count
+    total_params = count_parameters(model)
+    print(f"Total trainable parameters: {total_params}")
+    
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.Adam(model.parameters(), lr=0.001)
+    
+    # Training loop (1 epoch)
+    model.train()
+    best_accuracy = 0
+    for epoch in range(1):
+        total_loss = 0
+        correct = 0
+        total = 0
         
-        # Convert tensor to numpy for plotting
-        if isinstance(original_img, torch.Tensor):
-            original_img = original_img.squeeze().numpy()
-        elif isinstance(original_img, Image.Image):
-            original_img = np.array(original_img)
-        
-        # Plot original image
-        axes[0, i].imshow(original_img, cmap='gray')
-        axes[0, i].axis('off')
-        if i == 0:
-            axes[0, 0].set_title('Original')
-        
-        # Apply and plot augmentations
-        try:
-            # Rotation augmentation
-            rotated = F.rotate(torch.from_numpy(original_img).unsqueeze(0), angle=10)
-            axes[1, i].imshow(rotated.squeeze().numpy(), cmap='gray')
-            axes[1, i].axis('off')
-            if i == 0:
-                axes[1, 0].set_title('Rotation')
+        for batch_idx, (data, target) in tqdm(enumerate(train_loader)):
+            # Ensure data is on the right device
+            data, target = data.float(), target.long()
             
-            # Affine augmentation
-            affined = F.affine(torch.from_numpy(original_img).unsqueeze(0), angle=0, translate=(2, 2), scale=1.1, shear=0)
-            axes[2, i].imshow(affined.squeeze().numpy(), cmap='gray')
-            axes[2, i].axis('off')
-            if i == 0:
-                axes[2, 0].set_title('Affine')
+            optimizer.zero_grad()
+            output = model(data)
+            loss = criterion(output, target)
+            loss.backward()
+            optimizer.step()
+            
+            total_loss += loss.item()
+            
+            # Calculate accuracy
+            _, predicted = torch.max(output.data, 1)
+            total += target.size(0)
+            correct += (predicted == target).sum().item()
         
-        except Exception as e:
-            print(f"Error processing image {i}: {e}")
+        accuracy = 100 * correct / total
+        print(f'Epoch {epoch+1}, Loss: {total_loss/len(train_loader)}, Accuracy: {accuracy}%')
+        
+        # Update best accuracy
+        best_accuracy = max(best_accuracy, accuracy)
     
-    # Save and close
-    plt.tight_layout()
-    plt.savefig('outputs/augmentations/mnist_augmentations.png')
-    plt.close()
+    # Verify accuracy meets requirements
+    assert best_accuracy > 90, f"Model accuracy {best_accuracy}% should be > 90%"
     
-    print("Augmented images saved to outputs/augmentations/mnist_augmentations.png")
+    # Create models directory if it doesn't exist
+    os.makedirs('models', exist_ok=True)
+    
+    # Add timestamp to model filename
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    model_path = f'models/mnist_model_{timestamp}.pth'
+    
+    # Save the model
+    torch.save(model.state_dict(), model_path)
+    print(f'Model saved to {model_path}')
+    
+    return model, best_accuracy
 
-def get_train_transforms():
-    return transforms.Compose([
-        transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,))
-    ])
+if __name__ == "__main__":
+    train_model()

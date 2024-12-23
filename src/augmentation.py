@@ -4,15 +4,28 @@ import torchvision.utils as vutils
 import os
 import matplotlib.pyplot as plt
 
+class NormalizePixels:
+    def __call__(self, tensor):
+        return tensor.float() / 255.0
+    
+    def __repr__(self):
+        return self.__class__.__name__ + '()'
+    
+
+
 def get_augmentations():
     """
     Create a set of image augmentations for MNIST dataset
     """
     augmentations = transforms.Compose([
-        # 1. Random Rotation
+
+        # 1. Image Normalization
+        #NormalizePixels(),
+        
+        # 2. Random Rotation
         transforms.RandomRotation(10, fill=0),
         
-        # 2. Random Affine Transformation
+        # 3. Random Affine Transformation
         transforms.RandomAffine(
             degrees=0, 
             translate=(0.1, 0.1),  # 10% translation
@@ -20,9 +33,9 @@ def get_augmentations():
             fill=0
         ),
         
-        # 3. Elastic Deformation (using random perspective as a simpler alternative)
-        transforms.RandomPerspective(distortion_scale=0.2, p=0.5, fill=0)
-    ])
+    #     # 4. Elastic Deformation (using random perspective as a simpler alternative)
+    #     transforms.RandomPerspective(distortion_scale=0.1, p=0.4, fill=0)
+     ])
     
     return augmentations
 
@@ -40,6 +53,7 @@ def save_augmented_images(dataset, augmentations, num_samples=9):
     
     # Select first batch of images
     images, labels = next(iter(torch.utils.data.DataLoader(dataset, batch_size=num_samples)))
+    print("checking data types", type(images), type(labels))
     
     # Create a figure to plot original and augmented images
     fig, axes = plt.subplots(3, num_samples, figsize=(15, 6))
@@ -47,14 +61,16 @@ def save_augmented_images(dataset, augmentations, num_samples=9):
     
     for i in range(num_samples):
         # Original image
-        original_img = images[i].squeeze()
+        original_img = images[i].squeeze().numpy()
+        print("individual image size", type(original_img))
         axes[0, i].imshow(original_img, cmap='gray')
         axes[0, i].axis('off')
         if i == 0:
             axes[0, 0].set_title('Original')
         
         # Apply augmentations
-        augmented_img = augmentations(images[i].unsqueeze(0)).squeeze()
+        augmented_img = augmentations(images[i].numpy())
+        print("augmentation done successfully", augmented_img.shape)
         
         # Plot augmented images
         axes[1, i].imshow(augmented_img, cmap='gray')
@@ -86,6 +102,6 @@ def save_augmented_images(dataset, augmentations, num_samples=9):
 def get_train_transforms():
     return transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize((0.1307,), (0.3081,)),
+        transforms.Normalize((0.0,), (1.0,)),
         get_augmentations()  # Add the augmentations
     ])
