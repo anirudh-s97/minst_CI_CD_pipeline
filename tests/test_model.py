@@ -44,7 +44,7 @@ def test_model_training_stability():
     """
     Test model training stability and accuracy requirements
     """
-    _, final_accuracy = train_model()
+    model, final_accuracy = train_model()
     assert final_accuracy >= 95.0, f"Model accuracy {final_accuracy:.2f}% is below required 95%"
     print(f"\nFinal training accuracy: {final_accuracy:.2f}%")
     print("Training accuracy test: PASSED")
