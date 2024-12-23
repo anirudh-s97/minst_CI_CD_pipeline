@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
-from model import MNISTClassifier, count_parameters
+from src.model import MNISTClassifier, count_parameters
 from datetime import datetime
 import os
 import sys
@@ -14,7 +14,7 @@ from tqdm import tqdm
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import the augmentation utilities
-from augmentation import save_augmented_images, get_train_transforms
+from src.augmentation import save_augmented_images, get_train_transforms
 
 def train_model():
     # Set random seed for reproducibility

@@ -1,12 +1,11 @@
 import torch
 import sys
 import os
-
 # Add the project root to the Python path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 sys.path.insert(0, project_root)
-
 from src.model import MNISTClassifier, count_parameters
+from src.train import train_model
 
 def test_model_architecture():
     """
@@ -43,34 +42,12 @@ def test_model_architecture():
 
 def test_model_training_stability():
     """
-    Perform a quick training stability test
+    Test model training stability and accuracy requirements
     """
-    import torch.nn as nn
-    import torch.optim as optim
-    
-    model = MNISTClassifier()
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.001)
-    
-    # Create dummy data
-    dummy_input = torch.randn(32, 1, 28, 28)
-    dummy_target = torch.randint(0, 10, (32,))
-    
-    # Ensure no errors in forward and backward pass
-    try:
-        # Forward pass
-        output = model(dummy_input)
-        loss = criterion(output, dummy_target)
-        
-        # Backward pass
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        
-        print("\nTraining stability test: PASSED")
-    except Exception as e:
-        print(f"\nTraining stability test: FAILED\nError: {e}")
-        raise
+    _, final_accuracy = train_model()
+    assert final_accuracy >= 95.0, f"Model accuracy {final_accuracy:.2f}% is below required 95%"
+    print(f"\nFinal training accuracy: {final_accuracy:.2f}%")
+    print("Training accuracy test: PASSED")
 
 def main():
     test_model_architecture()
