@@ -56,7 +56,8 @@ def train_model():
     )
     
     # Initialize model, loss, and optimizer
-    model = MNISTClassifier()
+    device = torch.device("cpu")
+    model = MNISTClassifier().to(device)
     
     # Print parameter count
     total_params = count_parameters(model)
